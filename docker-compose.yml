@@ -1,0 +1,81 @@
+services:
+    app:
+        image: example-app
+        build:
+            context: ./docker/dev
+            dockerfile: Dockerfile
+        ports:
+            - '8001:80'
+        volumes:
+            - '.:/app'
+        depends_on:
+            mariadb:
+                condition: service_healthy
+            redis:
+                condition: service_healthy
+
+    reverb:
+        image: example-app
+        build:
+            context: ./docker/dev
+            dockerfile: Dockerfile
+        ports:
+            - '3000:3000'
+        volumes:
+            - '.:/app'
+        depends_on:
+            mariadb:
+                condition: service_healthy
+            redis:
+                condition: service_healthy
+        command: 'php artisan reverb:start --host=0.0.0.0 --debug'
+
+    worker:
+        image: example-app
+        build:
+            context: ./docker/dev
+            dockerfile: Dockerfile
+        volumes:
+            - '.:/app'
+        depends_on:
+            mariadb:
+                condition: service_healthy
+            redis:
+                condition: service_healthy
+        command: 'php artisan queue:work'
+
+    mariadb:
+        image: 'mariadb:11'
+        ports:
+            - '3306:3306'
+        environment:
+            MYSQL_ROOT_PASSWORD: '${DB_PASSWORD}'
+            MYSQL_ROOT_HOST: "%"
+            MYSQL_DATABASE: '${DB_DATABASE}'
+            MYSQL_USER: '${DB_USERNAME}'
+            MYSQL_PASSWORD: '${DB_PASSWORD}'
+            MYSQL_ALLOW_EMPTY_PASSWORD: 'yes'
+        volumes:
+            - 'mariadb:/var/lib/mysql'
+            - './docker/dev/create-testing-database.sh:/docker-entrypoint-initdb.d/10-create-testing-database.sh'
+        healthcheck:
+            test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+            retries: 3
+            timeout: 5s
+
+    redis:
+        image: 'redis:alpine'
+        ports:
+            - '6379:6379'
+        volumes:
+            - 'redis:/data'
+        healthcheck:
+            test: ["CMD", "redis-cli", "ping"]
+            retries: 3
+            timeout: 5s
+
+volumes:
+    mariadb:
+        driver: local
+    redis:
+        driver: local
