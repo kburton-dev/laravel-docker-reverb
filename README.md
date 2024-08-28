@@ -1,5 +1,10 @@
 ## Getting Started
 
+Copy example env
+```
+cp .env.example .env
+```
+
 Build frontend
 ```
 npm run dev
