@@ -1,8 +1,13 @@
 <?php
 
-use Illuminate\Foundation\Inspiring;
+use App\Events\PrivateExampleEvent;
+use App\Events\PublicExampleEvent;
 use Illuminate\Support\Facades\Artisan;
 
-Artisan::command('inspire', function () {
-    $this->comment(Inspiring::quote());
-})->purpose('Display an inspiring quote')->hourly();
+Artisan::command('app:broadcast-public', function () {
+    PublicExampleEvent::dispatch();
+});
+
+Artisan::command('app:broadcast-private', function () {
+    PrivateExampleEvent::dispatch();
+});
